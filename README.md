@@ -1,24 +1,43 @@
 # DheeMail
 
-Django MVT project with one app, `mailapp`, using SQLite and a custom user model.
+DheeMail is a Django-based web application that provides an email management system with features such as sending, receiving, drafting, scheduling, snoozing, starring, and organizing emails.
 
-## Run locally
+## Features
 
-From `C:\Users\shree\OneDrive\Desktop\Projects\dheemail`:
+- User registration and login
+- Send and receive emails
+- Compose and save draft emails
+- Scheduled emails
+- Snooze emails
+- Star important emails
+- Email threading
+- Email attachments
+- Labels for organizing emails
+- User profile and account management
+- Custom email dashboard
+- Responsive web interface
 
-```powershell
-..\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
+## Technologies Used
 
-If your virtual environment is inside the project folder instead, activate:
+- Python
+- Django
+- SQLite
+- HTML5
+- CSS3
+- JavaScript
+- Pillow
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+## Project Structure
 
-Then open `http://127.0.0.1:8000/`.
+```text
+Dheemail/
+│
+├── dheemail/          # Django project configuration
+├── mailapp/           # Main application
+├── media/             # Uploaded media and avatars
+├── static/            # CSS, JavaScript and images
+├── templates/         # HTML templates
+├── manage.py
+├── requirements.txt
+├── README.md
+└── .gitignore
