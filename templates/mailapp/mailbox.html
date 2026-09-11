@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ mailbox_title }} | DheeMail{% endblock %}
+
+{% block content %}
+<section class="mail-shell" aria-label="{{ mailbox_title }}">
+    <div class="mail-header">
+        <h1>{{ mailbox_title }}</h1>
+        <a class="primary-link" href="{% url 'compose' %}">Compose</a>
+    </div>
+
+    {% if page_obj.object_list %}
+        <div class="mail-list">
+            {% for email in page_obj.object_list %}
+                <article class="mail-row {% if mailbox == 'inbox' and email.id not in read_ids %}mail-row--unread{% endif %}">
+                    <form method="post" action="{% url 'toggle_star' email.pk %}" class="row-icon-form" data-star-form>
+                        {% csrf_token %}
+                        <button class="star-button {% if email.id in starred_ids %}is-starred{% endif %}" type="submit" aria-label="Toggle star" title="Star">&#9733;</button>
+                    </form>
+                    <a class="mail-row__link" href="{% url 'email_detail' email.pk %}">
+                        <strong>
+                            {% if mailbox == "sent" or mailbox == "drafts" %}
+                                Me
+                            {% else %}
+                                {{ email.sender.get_full_name|default:email.sender.username }}
+                            {% endif %}
+                        </strong>
+                        <span>{{ email.subject|default:"(No subject)" }}</span>
+                    </a>
+                    <time>
+                        {% if mailbox == "scheduled" and email.scheduled_at %}
+                            Scheduled {{ email.scheduled_at|date:"M d, H:i" }}
+                        {% elif mailbox == "snoozed" and email.snoozed_until %}
+                            Snoozed until {{ email.snoozed_until|date:"M d, H:i" }}
+                        {% elif email.sent_at %}
+                            {{ email.sent_at|date:"M d, H:i" }}
+                        {% else %}
+                            {{ email.updated_at|date:"M d, H:i" }}
+                        {% endif %}
+                    </time>
+                    {% if sidebar_labels %}
+                        <div class="row-label-menu" data-label-menu>
+                            <button class="row-icon-button" type="button" data-label-menu-toggle aria-label="Labels" title="Labels">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h5.8a2 2 0 0 1 1.4.6l5.7 5.7a2 2 0 0 1 0 2.8l-6.3 6.3a2 2 0 0 1-2.8 0l-5.7-5.7a2 2 0 0 1-.6-1.4V6.5Zm4 2.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4Z"/></svg>
+                            </button>
+                            <div class="row-label-panel" hidden>
+                                {% for label in sidebar_labels %}
+                                    <form method="post" action="{% url 'toggle_email_label' email.pk label.pk %}" data-label-toggle>
+                                        {% csrf_token %}
+                                        <button class="{% if label.id in email.user_label_ids %}is-assigned{% endif %}" type="submit">{{ label.name }}</button>
+                                    </form>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <form method="post" action="{% url 'delete_email' email.pk %}" data-delete-email-form>
+                        {% csrf_token %}
+                        <input type="hidden" name="next_mailbox" value="{{ mailbox }}">
+                        <button class="row-delete-button" type="submit" aria-label="Delete" title="Delete">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg>
+                        </button>
+                    </form>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if page_obj.has_other_pages %}
+        <nav class="pagination" aria-label="{{ mailbox_title }} pagination">
+            {% if page_obj.has_previous %}
+                <a class="secondary-button" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="secondary-button" href="?page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

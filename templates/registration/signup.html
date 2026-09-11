@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sign Up | DheeMail{% endblock %}
+
+{% block content %}
+<section class="auth-card auth-card--wide">
+    <img class="auth-logo" src="{% static 'mailapp/img/dheemail-logo-top.png' %}" alt="DheeMail">
+    <h1>Create your account</h1>
+    <form method="post" enctype="multipart/form-data" class="auth-form auth-form--grid">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="form-errors form-errors--full">{{ form.non_field_errors }}</div>
+        {% endif %}
+        {% for field in form %}
+            <label class="{% if field.name == 'avatar' or field.name == 'password1' or field.name == 'password2' %}field-full{% endif %}">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.errors %}
+                    <small>{{ field.errors|striptags }}</small>
+                {% endif %}
+            </label>
+        {% endfor %}
+        <button class="primary-button field-full" type="submit">Create account</button>
+    </form>
+    <p class="auth-switch">Already registered? <a href="{% url 'login' %}">Login</a></p>
+</section>
+{% endblock %}

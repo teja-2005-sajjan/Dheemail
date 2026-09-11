@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ email.subject|default:"Email" }} | DheeMail{% endblock %}
+
+{% block content %}
+<article class="email-detail">
+    <h1 class="email-subject">{{ email.subject|default:"(No subject)" }}</h1>
+    {% if email.status == "scheduled" and email.scheduled_at %}
+        <div class="status-banner">Scheduled to send on {{ email.scheduled_at|date:"M d, Y H:i" }}</div>
+    {% endif %}
+
+    <div class="email-detail__header">
+        <div class="sender-card">
+            <div class="sender-avatar">
+                {% if email.sender.avatar %}
+                    <img src="{{ email.sender.avatar.url }}" alt="{{ email.sender.username }}">
+                {% else %}
+                    <span>{{ email.sender.initials }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <strong>{{ email.sender.get_full_name|default:email.sender.username }}</strong>
+                <p>{{ email.sender.email|default:email.sender.username }}</p>
+            </div>
+        </div>
+        <div class="email-meta">
+            <time>
+                {% if email.sent_at %}
+                    {{ email.sent_at|date:"M d, Y H:i" }}
+                {% else %}
+                    {{ email.updated_at|date:"M d, Y H:i" }}
+                {% endif %}
+            </time>
+        </div>
+        <div class="email-detail__actions">
+            <form method="post" action="{% url 'toggle_star' email.pk %}" data-star-form>
+                {% csrf_token %}
+                <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                <button class="star-button {% if is_starred %}is-starred{% endif %}" type="submit" aria-label="Toggle star">&#9733;</button>
+            </form>
+        </div>
+    </div>
+
+    {% if visible_recipients %}
+        <div class="recipient-line">
+            <strong>To</strong>
+            {% for recipient in visible_recipients %}
+                <span>{{ recipient.user.email|default:recipient.user.username }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if email.body %}
+        <div class="email-body">{{ email.body|linebreaks }}</div>
+    {% endif %}
+
+    {% if user_recipient %}
+        <section class="snooze-panel" aria-label="Snooze email">
+            <div>
+                <strong>Snooze mail</strong>
+                {% if active_snooze %}
+                    <span>Hidden from inbox until {{ active_snooze.snoozed_until|date:"M d, Y H:i" }}</span>
+                {% else %}
+                    <span>Hide this email from inbox until a later time.</span>
+                {% endif %}
+            </div>
+            <form method="post" action="{% url 'snooze_email' email.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                <input type="datetime-local" name="snoozed_until" required>
+                <button class="secondary-button" type="submit">Snooze</button>
+            </form>
+            {% if active_snooze %}
+                <form method="post" action="{% url 'snooze_email' email.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                    <button class="text-button" type="submit" name="clear" value="1">Unsnooze</button>
+                </form>
+            {% endif %}
+        </section>
+    {% endif %}
+
+    {% if sidebar_labels %}
+        <div class="label-assignment">
+            <h2>Labels</h2>
+            <div class="label-chips">
+                {% for label in sidebar_labels %}
+                    <form method="post" action="{% url 'toggle_email_label' email.pk label.pk %}" data-label-toggle>
+                        {% csrf_token %}
+                        <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                        <button class="{% if label.id in assigned_label_ids %}label-chip label-chip--active{% else %}label-chip{% endif %}" type="submit">
+                            {{ label.name }}
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if email.attachments.all %}
+        <div class="attachment-list">
+            {% for attachment in email.attachments.all %}
+                <div class="attachment-item">
+                    <span>{{ attachment.file.name }}</span>
+                    <a class="secondary-button" href="{{ attachment.file.url }}" download>Download</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if email.parent_email %}
+        <div class="thread-link">
+            <a href="{% url 'email_detail' email.parent_email.pk %}">View previous email in thread</a>
+        </div>
+    {% endif %}
+
+    <div class="email-reply-actions email-reply-actions--bottom">
+        <a class="secondary-button" href="{% url 'reply_email' email.pk %}">Reply</a>
+        <a class="secondary-button" href="{% url 'reply_all_email' email.pk %}">Reply All</a>
+        <a class="secondary-button" href="{% url 'forward_email' email.pk %}">Forward</a>
+    </div>
+</article>
+{% endblock %}

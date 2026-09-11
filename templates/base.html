@@ -1,0 +1,107 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}DheeMail{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'mailapp/css/styles.css' %}">
+    <script src="{% static 'mailapp/js/app.js' %}" defer></script>
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <header class="topbar">
+        <div class="topbar__left">
+            <button class="icon-button" type="button" data-sidebar-toggle aria-label="Toggle sidebar">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <a class="brand" href="{% url 'dashboard' %}" aria-label="DheeMail dashboard">
+                <img src="{% static 'mailapp/img/dheemail-logo-top.png' %}" alt="DheeMail">
+            </a>
+        </div>
+        <form class="search" role="search" data-search-url="{% url 'search_emails' %}" autocomplete="off">
+            <input type="search" placeholder="Search mail" aria-label="Search mail" data-search-input>
+            <div class="search-results" data-search-results hidden></div>
+        </form>
+        <div class="avatar-menu">
+            <span class="navbar-user-name">{{ user.get_full_name|default:user.username }}</span>
+            <button class="avatar-button" type="button" aria-label="Account menu" aria-expanded="false" data-dropdown-toggle>
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="{{ user.username }}">
+                {% else %}
+                    <span>{{ user.initials }}</span>
+                {% endif %}
+            </button>
+            <div class="avatar-menu__panel">
+                <a href="{% url 'manage_account' %}">Manage Account</a>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message message--{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div class="app-layout">
+        <aside class="sidebar" aria-label="Mailbox navigation">
+            <nav class="sidebar-nav">
+                <a class="sidebar-compose {% if request.resolver_match.url_name == 'compose' %}is-active{% endif %}" href="{% url 'compose' %}">Compose</a>
+                <a class="{% if request.resolver_match.url_name == 'inbox' %}is-active{% endif %}" href="{% url 'inbox' %}">
+                    <span>Inbox</span>
+                    {% if sidebar_unread_count %}
+                        <strong>{{ sidebar_unread_count }}</strong>
+                    {% endif %}
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'sent' %}is-active{% endif %}" href="{% url 'sent' %}">Sent</a>
+                <a class="{% if request.resolver_match.url_name == 'drafts' %}is-active{% endif %}" href="{% url 'drafts' %}">Drafts</a>
+                <a class="{% if request.resolver_match.url_name == 'scheduled' %}is-active{% endif %}" href="{% url 'scheduled' %}">Scheduled</a>
+                <a class="{% if request.resolver_match.url_name == 'snoozed' %}is-active{% endif %}" href="{% url 'snoozed' %}">Snoozed</a>
+                <a class="{% if request.resolver_match.url_name == 'starred' %}is-active{% endif %}" href="{% url 'starred' %}">Starred</a>
+            </nav>
+            <div class="sidebar-labels">
+                <div class="sidebar-labels__title">Labels</div>
+                <form method="post" action="{% url 'create_label' %}" class="sidebar-label-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                    {{ sidebar_label_form.name }}
+                    <button type="submit">Add</button>
+                </form>
+                {% if sidebar_labels %}
+                    <nav class="sidebar-label-list" aria-label="Labels">
+                        {% for label in sidebar_labels %}
+                            <span class="sidebar-label-item">
+                                <a class="{% if current_label.pk == label.pk %}is-active{% endif %}" href="{% url 'label_mailbox' label.pk %}">{{ label.name }}</a>
+                                <form method="post" action="{% url 'delete_label' label.pk %}" data-confirm="Delete this label? Emails will not be deleted.">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next_url" value="{{ request.get_full_path }}">
+                                    <button type="submit" aria-label="Delete {{ label.name }}">&times;</button>
+                                </form>
+                            </span>
+                        {% endfor %}
+                    </nav>
+                {% endif %}
+            </div>
+        </aside>
+        <main class="page">
+    {% else %}
+        <main class="auth-page">
+    {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    {% if user.is_authenticated %}
+    </div>
+    {% endif %}
+</body>
+</html>

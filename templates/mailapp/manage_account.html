@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Account | DheeMail{% endblock %}
+
+{% block content %}
+<section class="account-panel account-panel--edit">
+    <form method="post" enctype="multipart/form-data" class="account-form account-form--profile">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="account">
+        <div class="account-hero">
+            <button class="account-avatar-large" type="button" data-avatar-trigger aria-label="Change avatar">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="{{ user.username }}" data-avatar-preview>
+                {% else %}
+                    <span data-avatar-fallback>{{ user.initials }}</span>
+                    <img src="" alt="" data-avatar-preview hidden>
+                {% endif %}
+            </button>
+            <h1>Manage Account</h1>
+        </div>
+
+        {{ account_form.avatar }}
+
+        <label>
+            <span>First name</span>
+            {{ account_form.first_name }}
+            {% if account_form.first_name.errors %}<small>{{ account_form.first_name.errors|striptags }}</small>{% endif %}
+        </label>
+        <label>
+            <span>Last name</span>
+            {{ account_form.last_name }}
+            {% if account_form.last_name.errors %}<small>{{ account_form.last_name.errors|striptags }}</small>{% endif %}
+        </label>
+        <label class="field-full">
+            <span>Email address</span>
+            {{ account_form.email }}
+            {% if account_form.email.errors %}<small>{{ account_form.email.errors|striptags }}</small>{% endif %}
+        </label>
+        <label>
+            <span>Gender</span>
+            {{ account_form.gender }}
+            {% if account_form.gender.errors %}<small>{{ account_form.gender.errors|striptags }}</small>{% endif %}
+        </label>
+        <label>
+            <span>Contact</span>
+            {{ account_form.contact }}
+            {% if account_form.contact.errors %}<small>{{ account_form.contact.errors|striptags }}</small>{% endif %}
+        </label>
+        <button class="primary-button field-full" type="submit">Save Changes</button>
+    </form>
+
+    <div class="account-readonly">
+        <div>
+            <span>Date joined</span>
+            <strong>{{ user.date_joined|date:"M d, Y H:i" }}</strong>
+        </div>
+        <div>
+            <span>Last login</span>
+            <strong>{{ user.last_login|date:"M d, Y H:i"|default:"Not available" }}</strong>
+        </div>
+    </div>
+
+    <form method="post" class="account-form password-form">
+        {% csrf_token %}
+        <input type="hidden" name="form_type" value="password">
+        <h2>Change Password</h2>
+        {% for field in password_form %}
+            <label>
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.errors %}<small>{{ field.errors|striptags }}</small>{% endif %}
+            </label>
+        {% endfor %}
+        <button class="secondary-button" type="submit">Update Password</button>
+    </form>
+</section>
+{% endblock %}
